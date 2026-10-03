@@ -1,0 +1,12 @@
+##CP-VASP  
+   LSOL    =   .TRUE.   # default: water
+   EB_K    =   78.3600  # relative permittivity of bulk solvent
+   SIGMA_K =   0.6000   # widrh of the dielectric cavity
+   NC_K    =   0.0025   # cutoff charge density
+   TAU     =   0.000525 # cavity surface tension
+   LRHOB   =   .TRUE.   # Write Bound charge file
+   LCEP    =   .TRUE.     
+   NESCHEM =   1
+   CAP_MAX =   2.0 
+   TARGETMU =  -4.6       
+   FERMICONVERGE = 0.01

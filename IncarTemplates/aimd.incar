@@ -1,0 +1,39 @@
+SYSTEM = aimd 
+
+Start parameter for this job
+   ISTART =        1   
+   ICHARG =        1
+   LWAVE  =       .FALSE.
+   LCHARG =       .FALSE.
+   LVTOT  =       .FALSE.
+   LVHAR =        .FALSE.
+   LELF =         .FALSE.
+   #LORBIT =      11
+   LPLANE =       F         
+   NSIM   =       1  
+   LREAL  =       Auto       
+   IVDW   =       11   
+
+Electronic relaxation 
+   ENCUT  =       450      
+   ALGO   =       V       
+   EDIFF  =       1.0E-5   
+   GGA    =       PE
+   ISYM   =       -1
+   SYMPREC=       1.0E-5
+   PREC   =       N
+   NELM   =       120
+   NELMIN =       5
+   ISMEAR =      0        
+   SIGMA  =      0.05  
+
+# AIMD  
+   #POMASS = 
+   NBLOCK = 1        # write info once step
+   MDALGO = 2        # Nose-Hoover
+   SMASS  =  0       # Nose mass-parameter (am),  -1:Cannot be used in equilibrium  calculate
+   NSW    =  100000  # number of steps 
+   POTIM  =   1      # time-step for ion-motion in fs,  <= 1 fs wtih H
+   #TEIN   =  500    # initial temperature
+   TEBEG  =   500    # begining temperature
+   TEEND  =   500    # ending temperature

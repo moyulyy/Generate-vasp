@@ -1,0 +1,19 @@
+# 密钥（格式见 llm_config.example.json）
+llm_config.json
+
+# 打包产物
+build/
+dist/
+*.spec
+
+# Python
+__pycache__/
+*.py[cod]
+
+# 本地设置 / 编辑器
+settings.ini
+.claude/
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

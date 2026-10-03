@@ -1,0 +1,35 @@
+SYSTEM = chargediff 
+
+Start parameter for this job
+   NWRITE =      2        
+   ISTART =      1        
+   ICHARG =      1        
+   LCHARG =     .TRUE.    
+   LWAVE  =     .FALSE.    
+   LORBIT =       11
+   #ADDGRID=     .TRUE.
+   LDIAG  =     .TRUE.
+   LPLANE =       F         
+   NSIM   =       1
+   LREAL  =       Auto        
+   IVDW   =       11         
+
+Electronic relaxation 
+   ENCUT  =       450              
+   ALGO   =       F         
+   EDIFF  =       1.0E-6    
+   GGA    =       PE
+   ISYM   =       0
+   SYMPREC=       1.0E-5
+   PREC   =       N
+   NELM   =       120
+   NELMIN =       5  
+   ISMEAR =       0         
+   SIGMA  =       0.05 
+
+Ionic relaxation
+   NSW    =      0       
+   EDIFFG =     -0.05    
+   IBRION =      -1      
+   ISIF   =      0   
+       

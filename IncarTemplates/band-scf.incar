@@ -1,0 +1,35 @@
+SYSTEM = band-scf
+
+Start parameter for this job
+   NWRITE =      2         
+   ISTART =      1        
+   ICHARG =      1         
+   LCHARG =      T         
+   LWAVE  =      T         
+   #ADDGRID=     T
+   LPLANE =      F         
+   NSIM   =      1
+   LORBIT =      11                 
+   LREAL  =      A         
+
+Electronic relaxation 
+   ENCUT  =       450       
+   ALGO   =       F         
+   EDIFF  =       1.0E-5    
+   GGA    =       PE
+   ISYM   =       -1
+   SYMPREC=       1.0E-5
+   PREC   =       N
+   NELM   =       120
+   NELMIN =       5
+   ISMEAR =       0         
+   SIGMA  =       0.05      
+    EMIN  =       -12       
+    EMAX  =       12        
+   NEDOS  =       2000      
+
+Ionic relaxation
+   NSW    =      0         
+   EDIFFG =      -0.02     
+   IBRION =      -1        
+   ISIF   =      0         

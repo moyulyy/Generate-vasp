@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #F7F7FA;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei UI", sans-serif; }
+    #viewer { position: absolute; inset: 0; }
+    #layer { position: absolute; inset: 0; display: none; cursor: crosshair; touch-action: none; }
+    #rect { display: none; position: absolute; border: 1.5px solid #007AFF; background: #007AFF18; border-radius: 5px; pointer-events: none; }
+    #empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      pointer-events: none; color: #8E8E93; font-size: 13px; }
+    #empty .orb { width: 84px; height: 84px; border-radius: 50%; margin-bottom: 20px; border: 1px solid #DDE3EC;
+      background: #F5F9FF; box-shadow: inset -14px -14px 28px #DDE7F3; }
+    #empty strong { color: #3A3A3C; font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+    #hint { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); white-space: nowrap; pointer-events: none;
+      background: #FFFFFFEB; border: 1px solid #E5E5EA; border-radius: 16px; padding: 7px 16px; color: #6E6E73; font-size: 12px; }
+    #legend { position: absolute; top: 12px; right: 12px; padding: 8px 12px; border: 1px solid #E5E5EA; border-radius: 12px;
+      background: #FFFFFFEE; font-size: 12px; color: #3A3A3C; }
+    #legend[hidden] { display: none; }
+    .row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+    .ball { width: 13px; height: 13px; border-radius: 50%; border: 1px solid #0000001A;
+      background-image: radial-gradient(circle at 30% 25%, #FFFFFF90, transparent 65%); }
+    .n { color: #8E8E93; margin-left: auto; padding-left: 10px; }
+    .key { margin-top: 6px; padding-top: 6px; border-top: 1px solid #EFEFF4; color: #6E6E73; max-width: 230px; }
+    .key[hidden] { display: none; }
+  </style>
+  <script src="3Dmol-min.js"></script>
+  <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head>
+<body>
+  <div id="viewer"></div>
+  <div id="empty"><div class="orb"></div><strong>从一个结构开始</strong><span>在左侧选择或拖入 CIF / POSCAR</span></div>
+  <div id="layer"><div id="rect"></div></div>
+  <aside id="legend" hidden><div id="entries"></div><div class="key">◍ 黑色网格 = 固定　◍ 橙色 = 部分固定</div><div class="key" id="pbckey" hidden></div></aside>
+  <div id="hint">拖动旋转 · 滚轮缩放 · 右键平移</div>
+  <script src="viewer.js"></script>
+</body>
+</html>

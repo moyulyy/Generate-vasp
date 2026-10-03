@@ -1,0 +1,15 @@
+COHPstartEnergy  -12
+COHPendEnergy     12
+usebasisset pbeVaspFit2015
+
+basisfunctions O   2s  2p
+basisfunctions Cu  3d  4p
+
+cohpbetween atom 37 and atom 38  orbitalwise
+cohpbetween atom 37 and atom 38  orbitalwise
+cohpbetween atom 37 and atom 38  orbitalwise
+
+gaussianSmearingWidth 0.05
+!writeGrossPopulation
+!loadProjectionFromFile
+saveProjectionToFile 

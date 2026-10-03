@@ -1,0 +1,8 @@
+## Solvation
+   LSOL    =   .TRUE.   # default: water
+   EB_K    =   78.3600  # relative permittivity of bulk solvent
+   SIGMA_K =   0.6000   # widrh of the dielectric cavity
+   NC_K    =   0.0025   # cutoff charge density
+   TAU     =   0.000525 # cavity surface tension
+   LRHOB   =   .TRUE.   # Write Bound charge file
+   #NELECT = 

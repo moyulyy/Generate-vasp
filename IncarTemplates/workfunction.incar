@@ -1,0 +1,36 @@
+SYSTEM = workfunction          
+
+Start parameter for this job 
+   NWRITE =       2      
+   ISTART =       1      
+   ICHARG =       1      
+   LCHARG =       T      
+   LWAVE  =       F     
+   ADDGRID=       T
+   LORBIT =       11       
+   LPLANE =       F        
+   NSIM   =       1  
+   LREAL  =       Auto     
+   IVDW   =       11   
+   LVHAR  =       T
+   LDIPOL =       T
+   IDIPOL =       3   
+
+Electronic relaxation    
+   ENCUT  =       450          
+   ALGO   =       F         
+   EDIFF  =       1.0E-5    
+   ISYM   =       -1
+   GGA    =       PE 
+   SYMPREC=       1.0E-5
+   PREC   =       N
+   NELM   =       120
+   NELMIN =       5 
+   ISMEAR =       0     #1     
+   SIGMA  =       0.05  #0.2    
+
+Ionic relaxation
+   NSW    =       0      
+   EDIFFG =       -0.01  
+   IBRION =       -1     
+   ISIF   =       0      

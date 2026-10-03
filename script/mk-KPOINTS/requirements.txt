@@ -1,0 +1,11 @@
+# mk-KPOINTS 依赖
+# 安装:  pip install -r requirements.txt
+
+# 必需: 读取 POSCAR / 晶胞 / 二维 Bravais 点阵 / 平面波路径
+ase>=3.22
+
+# bulk 能带路径必需(配套 seekpath); slab 二维路径不需要
+spglib>=2.0
+
+# bulk 能带路径后端(HPKOT 标准路径, 依赖 spglib)
+seekpath>=2.0

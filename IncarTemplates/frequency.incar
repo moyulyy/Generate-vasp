@@ -1,0 +1,33 @@
+SYSTEM =freq        
+
+Start parameter for this job
+   NWRITE =       2         
+   ISTART =       1         
+   ICHARG =       1         
+   LCHARG =       F     
+   LWAVE  =       F
+   LPLANE =       F         
+   NSIM   =       4
+   LREAL  =       Auto         
+   IVDW   =       11           
+     
+Electronic relaxation 
+   ENCUT  =       450        
+   ALGO   =       F         
+   EDIFF  =       1.0E-5    
+   GGA    =       PE
+   ISYM   =       -1
+   SYMPREC=       1.0E-5
+   PREC   =       N
+   NELM   =       120
+   NELMIN =       5 
+   ISMEAR =       0    #1       
+   SIGMA  =       0.05 #0.2         
+
+Ionic relaxation
+   NSW    =       1         
+   EDIFFG =       -0.02      
+   IBRION =       5         
+   NFREE  =       2
+   POTIM  =       0.015
+   ISIF   =       2         

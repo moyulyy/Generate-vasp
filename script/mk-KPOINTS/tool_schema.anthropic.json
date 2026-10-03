@@ -1,0 +1,57 @@
+{
+  "name": "generate_kpoints",
+  "description": "根据 POSCAR 文件生成 VASP KPOINTS。mode=mesh 时按 K 点密度阈值生成 Gamma 中心网格；mode=lines 时生成高对称能带路径（bulk 用 seekpath/HPKOT，slab 用 ASE 二维点阵），并返回画能带图用的横轴坐标（等价 VASPKIT 的 KLABELS）。会自动按真空层厚度判别 mole/slab/bulk。返回 JSON：{status, mode, structure_type, detected, out_file, mesh, lattice, backend, labels, axis[], warnings[], kpoints}。",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "poscar_filepath": {
+        "type": "string",
+        "description": "POSCAR / CONTCAR 文件路径（本地路径）。"
+      },
+      "mode": {
+        "type": "string",
+        "enum": ["mesh", "lines"],
+        "default": "mesh",
+        "description": "mesh = Gamma 中心 K 点网格；lines = 高对称能带路径。"
+      },
+      "structure_type": {
+        "type": "string",
+        "enum": ["auto", "mole", "slab", "bulk"],
+        "default": "auto",
+        "description": "体系类型约束。auto = 按真空层厚度自动判别。"
+      },
+      "threshold": {
+        "type": "number",
+        "default": 0.04,
+        "exclusiveMinimum": 0,
+        "description": "K 点密度阈值：对每个晶格方向求最小整数 k，使 1/(晶格长度*k) <= threshold；越小网格越密。"
+      },
+      "vacuum_threshold": {
+        "type": "number",
+        "default": 5.0,
+        "exclusiveMinimum": 0,
+        "description": "自动判别体系类型所用的真空层阈值（单位 Å）。"
+      },
+      "per_seg": {
+        "type": "integer",
+        "default": 20,
+        "minimum": 1,
+        "maximum": 1000,
+        "description": "lines 模式每一段高对称路径的插点数。"
+      },
+      "backend": {
+        "type": "string",
+        "enum": ["auto", "ase", "seekpath"],
+        "default": "auto",
+        "description": "能带路径后端。auto = bulk 用 seekpath（未安装则回退 ASE）、slab 用 ASE；seekpath 不支持二维。"
+      },
+      "output_path": {
+        "type": "string",
+        "default": "KPOINTS",
+        "description": "KPOINTS 写出路径。传 \"-\" 表示不写文件、仅在返回值 kpoints 中给出内容。"
+      }
+    },
+    "required": ["poscar_filepath"],
+    "additionalProperties": false
+  }
+}

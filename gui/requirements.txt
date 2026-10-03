@@ -1,0 +1,5 @@
+PySide6>=6.6,<7
+numpy>=1.24
+ase>=3.23
+spglib>=2.0      # 可选：能带路径使用原胞
+seekpath>=2.0    # 可选：体相能带使用 HPKOT 标准路径

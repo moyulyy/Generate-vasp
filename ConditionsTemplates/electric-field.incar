@@ -1,0 +1,4 @@
+## E-field
+   LDIPOL =    .TRUE.
+   IDIPOL =    3
+   EFIELD =    -0.1  #V/Angstorm  , 3.0 Angstorm *EFIELD = apllied U 

@@ -1,0 +1,30 @@
+{
+  "type": "function",
+  "function": {
+    "name": "make_potcar",
+    "description": "根据 VASP 计算所需的元素列表（或 POSCAR 文件里的元素字串）按顺序拼接各元素的赝势，生成 POTCAR 文件。元素例如 'Bi Mo O'，会按元素在字符串中的顺序依次读取数据库中对应标签的 POTCAR 并拼接。",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "elements_string": {
+          "type": "string",
+          "description": "元素字串，元素之间用空格或制表符分隔，例如 'Bi Mo O'（对应 POSCAR 第 6 行的元素行）。元素顺序决定 POTCAR 的拼接顺序。"
+        },
+        "output_path": {
+          "type": "string",
+          "description": "输出路径。可以是文件路径（如 'D:/work/POTCAR'），也可以是文件夹路径（如 'D:/work/gama'），文件夹不存在时需先创建，程序会在其中自动写入 POTCAR。"
+        },
+        "potcar_dir": {
+          "type": "string",
+          "description": "赝势数据库根路径，其中每个元素（或标签）一个文件夹，结构为 {potcar_dir}/{标签}/POTCAR。可选，缺省时使用脚本内置的 POTCAR_DIR。"
+        },
+        "clean": {
+          "type": "boolean",
+          "description": "是否在生成时删除各元素 POTCAR 中所有包含 SHA256 或 COPYR 的行。可选，缺省为 false（保留这些行）。"
+        }
+      },
+      "required": ["elements_string", "output_path"],
+      "additionalProperties": false
+    }
+  }
+}
