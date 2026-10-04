@@ -285,6 +285,8 @@ Generate-vasp/
 
 ### v1.0.1
 
+便携包下载：[`Generate-VASP-1.0.1-win64.zip`](https://github.com/moyulyy/Generate-vasp/releases/tag/v1.0.1)
+
 - 修复打包版读取 CIF 报 `ase\spacegroup\spacegroup.dat` 不存在的问题：打包时收集 ASE 的数据文件。
 - `llm_config.json` 容错：结尾多余的逗号不再导致被误判为“未配置 LLM”，格式错误时界面会显示具体原因。
 - 本地打包会复用开发机的 `llm_config.json`，让便携版与源码运行一致；发行压缩包仍不包含任何密钥。
