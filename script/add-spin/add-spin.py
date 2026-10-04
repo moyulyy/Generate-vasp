@@ -50,11 +50,52 @@ LLM_TEMPERATURE = 0.2
 LLM_TIMEOUT = 180
 LLM_MAX_RETRIES = 3  # 单轮请求的最大总尝试次数（含首次请求）
 LLM_MAX_STEPS = 8
-LLM_CONFIG_FILE = ""  # 实际读取的配置文件路径（未找到时为空）
+LLM_CONFIG_FILE = ""   # 实际读取的配置文件路径（未找到时为空）
+LLM_CONFIG_ERROR = ""  # 配置文件存在但读取/解析失败时的错误说明（成功或未找到时为空）
+
+
+def _strip_trailing_commas(text: str) -> str:
+    """去掉对象 / 数组末尾多余的逗号（手写 JSON 时常见），字符串内的逗号保持原样。"""
+    out: List[str] = []
+    in_str = escaped = False
+    i, n = 0, len(text)
+    while i < n:
+        ch = text[i]
+        if in_str:
+            out.append(ch)
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+            out.append(ch)
+        elif ch == ",":
+            j = i + 1
+            while j < n and text[j] in " \t\r\n":
+                j += 1
+            if j < n and text[j] in "}]":
+                i += 1  # 末尾逗号：跳过它
+                continue
+            out.append(ch)
+        else:
+            out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def _parse_llm_config(text: str) -> Any:
+    """解析配置文本；标准 JSON 失败时容忍末尾多余逗号再试一次。"""
+    try:
+        return json.loads(text)
+    except ValueError:
+        return json.loads(_strip_trailing_commas(text))
 
 
 def _load_llm_config() -> None:
-    global LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, LLM_TEMPERATURE, LLM_TIMEOUT, LLM_CONFIG_FILE
+    global LLM_API_KEY, LLM_BASE_URL, LLM_MODEL, LLM_TEMPERATURE, LLM_TIMEOUT, LLM_CONFIG_FILE, LLM_CONFIG_ERROR
     here = os.path.dirname(os.path.abspath(__file__))
     candidates = [os.environ.get("LLM_CONFIG", ""),
                   os.path.join(here, "..", "..", "llm_config.json"),
@@ -63,10 +104,11 @@ def _load_llm_config() -> None:
         if not os.path.isfile(path):
             continue
         try:
-            with open(path, encoding="utf-8") as fh:
-                cfg = json.load(fh)
+            with open(path, encoding="utf-8-sig") as fh:
+                cfg = _parse_llm_config(fh.read())
         except (OSError, ValueError) as exc:
-            print(f"[add-spin] 无法读取 {path}：{exc}", file=sys.stderr)
+            LLM_CONFIG_ERROR = f"无法读取 {path}：{exc}"
+            print(f"[add-spin] {LLM_CONFIG_ERROR}", file=sys.stderr)
             return
         LLM_API_KEY = str(cfg.get("api_key") or LLM_API_KEY)
         LLM_BASE_URL = str(cfg.get("base_url") or LLM_BASE_URL)
@@ -74,6 +116,7 @@ def _load_llm_config() -> None:
         LLM_TEMPERATURE = float(cfg.get("temperature", LLM_TEMPERATURE))
         LLM_TIMEOUT = float(cfg.get("timeout", LLM_TIMEOUT))
         LLM_CONFIG_FILE = os.path.abspath(path)
+        LLM_CONFIG_ERROR = ""
         return
 
 

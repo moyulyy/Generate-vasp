@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 GUI = ROOT / "gui"
 NAME = "Generate-VASP"
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "1.0.0"
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "1.0.1"
 BUILD = ROOT / "build"
 DIST = ROOT / "dist"
 APP = DIST / NAME
@@ -28,6 +28,9 @@ HIDDEN = [
     "ase.lattice", "ase.spacegroup", "spglib", "seekpath",
 ]
 COLLECT = ["ase.io", "ase.lattice", "ase.dft", "seekpath", "spglib"]
+# ase 的部分功能在运行时读取包内数据文件（如 ase/spacegroup/spacegroup.dat），
+# --collect-submodules 不会带上它们，必须显式收集，否则打包后会报 Errno 2。
+DATA = ["ase.spacegroup"]
 EXCLUDE = ["tkinter", "matplotlib", "IPython", "pytest", "ase.gui", "ase.test", "PySide6.Qt3DCore",
            "PySide6.QtQuick3D", "PySide6.QtMultimedia", "PySide6.QtCharts", "PySide6.QtDataVisualization"]
 # 放在 exe 旁边、用户可直接修改的文件
@@ -48,6 +51,8 @@ def run_pyinstaller():
         args += ["--hidden-import", m]
     for m in COLLECT:
         args += ["--collect-submodules", m]
+    for m in DATA:
+        args += ["--collect-data", m]
     for m in EXCLUDE:
         args += ["--exclude-module", m]
     subprocess.run(args, check=True)
@@ -108,9 +113,11 @@ def copy_editable():
         "目录结构：POTCAR/标签/POTCAR，例如 POTCAR/Ni_pv/POTCAR。\n"
         "也可以在程序「K 点与赝势」中把赝势库指向其他目录。\n", encoding="utf-8")
     shutil.copy2(Path(__file__).with_name("使用说明.txt"), APP / "使用说明.txt")
-    leaked = [p for p in APP.rglob("llm_config.json")]
-    if leaked:
-        raise SystemExit(f"打包目录中不应包含密钥文件：{leaked}")
+    # 本机调试时复用开发环境已配好的 llm_config.json，让便携版与源码运行行为一致。
+    # 该文件不会进入发行压缩包（见 make_zip），不会随发布泄露密钥。
+    local_cfg = ROOT / "llm_config.json"
+    if local_cfg.is_file():
+        shutil.copy2(local_cfg, APP / "llm_config.json")
 
 
 def make_zip() -> Path:
@@ -118,7 +125,13 @@ def make_zip() -> Path:
     out.unlink(missing_ok=True)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         for f in sorted(APP.rglob("*")):
+            if f.name == "llm_config.json":  # 密钥文件只留在本机目录，不进压缩包
+                continue
             z.write(f, Path(NAME) / f.relative_to(APP))
+        leaked = [n for n in z.namelist() if n.endswith("llm_config.json")]
+    if leaked:
+        out.unlink(missing_ok=True)
+        raise SystemExit(f"压缩包中不应包含密钥文件：{leaked}")
     return out
 
 

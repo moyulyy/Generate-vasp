@@ -309,6 +309,9 @@ def llm_magmom(spos, poscar: str, hint: str = "", progress=None) -> dict:
     """调用 add-spin 的 LLM 工具调用流程；失败时抛出异常（不静默回退）。"""
     import argparse
     if not llm_configured():
+        if spin.LLM_CONFIG_ERROR:
+            raise RuntimeError(f"LLM 配置有误：{spin.LLM_CONFIG_ERROR}\n"
+                               "请检查 llm_config.json 的格式（JSON 末尾不要有多余逗号），或改用环境变量 LLM_API_KEY")
         raise RuntimeError(f"未配置 LLM：请把 llm_config.example.json 复制为 {ROOT / 'llm_config.json'} 并填写 api_key，"
                            "或设置环境变量 LLM_API_KEY")
     args = argparse.Namespace(api_key=None, base_url=None, model=None,

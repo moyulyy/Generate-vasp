@@ -89,11 +89,13 @@ Windows 下也可以：
 
 也可以用环境变量 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL` 设置，环境变量优先。`llm_config.json` 已加入 `.gitignore`，不会被提交。
 
+配置文件允许末尾有多余逗号，读取时会自动忽略；若 JSON 格式仍然有误，界面会显示具体的解析错误，而不是笼统提示“未配置 LLM”。
+
 ### 打包便携版
 
 ```bash
 pip install pyinstaller pefile spglib seekpath
-python packaging/build.py 1.0.0      # 输出 dist/Generate-VASP/ 与 dist/Generate-VASP-1.0.0-win64.zip
+python packaging/build.py 1.0.1      # 输出 dist/Generate-VASP/ 与 dist/Generate-VASP-1.0.1-win64.zip
 ```
 
 打包脚本会去掉用不到的 Qt 模块，把模板与脚本放到 exe 旁边，并检查压缩包中不含 `llm_config.json`。
@@ -278,6 +280,18 @@ Generate-vasp/
 - **LLM 自旋分析**：需要联网和可用的 API Key，每次分析会产生调用费用；LLM 给出的方案同样只是初猜，需要比较不同磁序的总能。
 - **lobsterin 基函数**：按 POTCAR 价层推断，相当于标准基组；需要更大基组（如加 4p 极化函数）时请在 lobsterin 页手动修改。
 - **POSCAR 手动编辑**：在 3D 视图中修改固定状态会重新生成 POSCAR，手动加的注释与格式不会保留。
+
+## 更新日志
+
+### v1.0.1
+
+- 修复打包版读取 CIF 报 `ase\spacegroup\spacegroup.dat` 不存在的问题：打包时收集 ASE 的数据文件。
+- `llm_config.json` 容错：结尾多余的逗号不再导致被误判为“未配置 LLM”，格式错误时界面会显示具体原因。
+- 本地打包会复用开发机的 `llm_config.json`，让便携版与源码运行一致；发行压缩包仍不包含任何密钥。
+
+### v1.0.0
+
+- 首个公开版本：GUI、命令行脚本、INCAR / 条件模板与便携版打包。
 
 ## 许可
 
