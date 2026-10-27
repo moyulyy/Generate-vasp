@@ -45,6 +45,8 @@ const S = {
   optionsTimer: null,
   optionsSeq: 0,
   optionsApplied: 0,
+  optionsRevision: 0,
+  segHandlers: Object.create(null),
   find: { open: false, query: '', caseSensitive: false, matches: [], current: -1 },
   llmHint: '',
   llmStartedAt: 0,
@@ -811,6 +813,7 @@ function renderProjects() {
 /* ------------------------------------------------------------------ 通用分段控件 */
 function buildSegmented(element, items, current, handler) {
   if (!element) return;
+  if (element.id) S.segHandlers[element.id] = handler;
   const key = JSON.stringify(items);
   if (element.dataset.key !== key) {
     element.replaceChildren();
@@ -820,7 +823,6 @@ function buildSegmented(element, items, current, handler) {
       button.className = 'segment';
       button.dataset.value = String(item.key);
       button.textContent = item.label;
-      button.addEventListener('click', () => handler(item.key));
       element.append(button);
     }
     element.dataset.key = key;
@@ -830,8 +832,26 @@ function buildSegmented(element, items, current, handler) {
   });
 }
 
+function onSegmentedClick(event) {
+  const button = event.target && event.target.closest
+    ? event.target.closest('.segment[data-value]')
+    : null;
+  if (!button) return;
+  const group = button.closest('.segmented');
+  if (!group || !group.id) return;
+  const handler = S.segHandlers[group.id];
+  if (!handler) return;
+  try {
+    post({ type: 'log', message: `click ${group.id} = ${button.dataset.value}` });
+  } catch {
+    // ignore
+  }
+  handler(button.dataset.value);
+}
+
 function scheduleOptions() {
   if (!S.options) return;
+  S.optionsRevision += 1;
   if (S.optionsTimer) clearTimeout(S.optionsTimer);
   S.optionsTimer = setTimeout(() => {
     S.optionsTimer = null;
@@ -846,6 +866,7 @@ async function applyOptionsNow() {
     S.optionsTimer = null;
   }
   const seq = ++S.optionsSeq;
+  const revision = S.optionsRevision;
   const payload = JSON.parse(JSON.stringify(S.options));
   try {
     const state = await rpc('applyOptions', {
@@ -853,10 +874,29 @@ async function applyOptionsNow() {
       knownStructureRevision: S.structureRevision,
     });
     if (seq < S.optionsApplied) return true;
+    if (revision !== S.optionsRevision) {
+      try {
+        post({ type: 'log', message: `applyOptions ignored stale rev ${revision}/${S.optionsRevision}` });
+      } catch {
+        // ignore
+      }
+      return true;
+    }
     S.optionsApplied = seq;
-    if (state && state.options) applyState(state);
+    if (state && state.options) {
+      try {
+        post({
+          type: 'log',
+          message: `applyOptions applied rev ${revision}: system=${state.options.system} spin=${state.options.spin} u=${state.options.u}`,
+        });
+      } catch {
+        // ignore
+      }
+      applyState(state);
+    }
     return true;
   } catch (error) {
+    reportWebviewError('applyOptions', error);
     showToast(error.message, true);
     return false;
   }
@@ -2487,5 +2527,6 @@ window.addEventListener('unhandledrejection', (event) => {
   reportWebviewError('webview unhandledrejection', event.reason);
 });
 
+document.addEventListener('click', onSegmentedClick, true);
 bindEvents();
 post({ type: 'ready' });
