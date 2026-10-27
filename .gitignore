@@ -17,3 +17,7 @@ settings.ini
 .idea/
 Thumbs.db
 .DS_Store
+
+# VS Code 扩展的调试配置（其余 .vscode 目录仍忽略）
+!vscode-extension/.vscode/
+!vscode-extension/.vscode/**

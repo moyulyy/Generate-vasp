@@ -1,0 +1,161 @@
+{
+  "name": "generate-vasp",
+  "displayName": "Generate-VASP",
+  "description": "VASP 作业输入文件生成器：CIF / POSCAR → 固定原子 → INCAR · KPOINTS · POSCAR · POTCAR",
+  "version": "1.0.1",
+  "publisher": "moyulyy",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "需要运行 Python 后端并写入 VASP 作业文件。"
+    },
+    "virtualWorkspaces": false
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "vasp",
+    "incar",
+    "poscar",
+    "potcar",
+    "kpoints",
+    "materials",
+    "dft"
+  ],
+  "icon": "media/app.png",
+  "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moyulyy/Generate-vasp.git"
+  },
+  "activationEvents": [
+    "onView:generateVasp.launcher",
+    "onCommand:generateVasp.open",
+    "onCommand:generateVasp.openStructure"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "generateVasp",
+          "title": "Generate-VASP",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "generateVasp": [
+        {
+          "type": "webview",
+          "id": "generateVasp.launcher",
+          "name": "VASP 作业文件生成器"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "generateVasp.open",
+        "title": "Generate-VASP: 打开生成器",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "generateVasp.openStructure",
+        "title": "Generate-VASP: 用生成器打开结构文件",
+        "icon": "$(symbol-structure)"
+      },
+      {
+        "command": "generateVasp.installDependencies",
+        "title": "Generate-VASP: 安装 Python 依赖 (numpy / ase)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "generateVasp.openStructure",
+          "when": "resourceExtname == '.cif' || resourceExtname == '.vasp' || resourceExtname == '.poscar' || resourceFilename == 'POSCAR' || resourceFilename =~ /^CONTCAR/",
+          "group": "navigation@90"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "generateVasp.openStructure",
+          "when": "resourceExtname == '.cif' || resourceExtname == '.vasp' || resourceExtname == '.poscar' || resourceFilename == 'POSCAR' || resourceFilename =~ /^CONTCAR/",
+          "group": "navigation@90"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "generateVasp.open",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v"
+      }
+    ],
+    "configuration": {
+      "title": "Generate-VASP",
+      "properties": {
+        "generateVasp.pythonPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "运行后端的 Python 解释器。留空时依次尝试工作区 `.venv`、`venv`、`python3`、`python`。需要安装 `numpy` 与 `ase`；`spglib`、`seekpath` 可选。"
+        },
+        "generateVasp.potcarPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "赝势库目录（结构为 `标签/POTCAR`，如 `Ni_pv/POTCAR`）。留空时使用脚本内置路径，若不存在则使用扩展旁的 `POTCAR/` 目录。"
+        },
+        "generateVasp.llmConfigPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "LLM 连接配置 `llm_config.json` 的路径。留空时依次查找工作区根目录与扩展资源目录。也可用环境变量 `LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL`。"
+        },
+        "generateVasp.boundary": {
+          "type": "boolean",
+          "default": true,
+          "description": "在 3D 视图中显示晶胞面 / 棱 / 角上的边界等价原子。"
+        },
+        "generateVasp.bonds": {
+          "type": "string",
+          "enum": [
+            "off",
+            "half",
+            "ghost"
+          ],
+          "enumDescriptions": [
+            "不显示跨边界键",
+            "画到两原子中点的半键",
+            "显示与胞内原子成键的胞外原子（浅色）"
+          ],
+          "default": "half",
+          "description": "跨周期边界成键的显示方式。"
+        },
+        "generateVasp.autoLoadLastStructure": {
+          "type": "boolean",
+          "default": false,
+          "description": "打开生成器面板时自动载入上次使用的结构文件。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run sync && npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "sync": "node scripts/sync-resources.js",
+    "prepare": "node scripts/sync-resources.js",
+    "check": "node --check media/main.js && node --check media/viewer.js"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.6.0"
+  }
+}

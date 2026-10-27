@@ -1,0 +1,12 @@
+.vscode/**
+src/**
+node_modules/**
+scripts/**
+tsconfig.json
+.gitignore
+package-lock.json
+**/*.map
+**/*.ts
+**/__pycache__/**
+**/*.pyc
+python/resources/.sync-stamp

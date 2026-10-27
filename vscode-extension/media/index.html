@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src {{cspSource}} data:; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}}; frame-src {{cspSource}}; font-src {{cspSource}}; connect-src 'none';">
+  <link rel="stylesheet" href="{{styleUri}}">
+  <title>Generate-VASP</title>
+</head>
+<body>
+<div id="app">
+  <header id="navbar">
+    <div class="brand">
+      <img id="appIcon" src="{{iconUri}}" alt="">
+      <div class="brand-text">
+        <div class="title">VASP 作业文件生成器</div>
+        <div class="subtitle">CIF / POSCAR → 固定原子 → INCAR · KPOINTS · POSCAR · POTCAR</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <span id="envBadge" class="env-badge">检查环境…</span>
+      <button id="openSettings" class="icon-btn" title="打开扩展设置">⚙</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="settingsPane" class="pane settings-pane">
+      <div class="pane-scroll">
+
+        <section class="card">
+          <div class="card-head"><span class="step">1</span><h2>结构文件</h2></div>
+          <div class="card-body">
+            <button id="dropZone" class="dropzone" type="button">
+              <span class="drop-icon">⇧</span>
+              <strong>点击选择，或把 CIF / POSCAR / CONTCAR 拖到这里</strong>
+              <span class="hint">CIF 会自动转换为 POSCAR · 输出写到同一目录</span>
+            </button>
+            <div id="fileBox" class="file-box hidden">
+              <div class="file-chip">
+                <div class="file-meta">
+                  <span id="fileName" class="file-name"></span>
+                  <span id="fileDir" class="hint"></span>
+                </div>
+                <button id="changeFile" class="ghost" type="button">更换</button>
+                <button id="removeFile" class="ghost danger" type="button">移除</button>
+              </div>
+              <div id="chips" class="chips"></div>
+              <div id="loadNote" class="hint"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><span class="step">2</span><h2>计算项目</h2></div>
+          <div class="card-body">
+            <div id="projectGrid" class="project-grid"></div>
+            <div id="tplNote" class="note-box hidden"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><span class="step">3</span><h2>体系与电子结构</h2></div>
+          <div class="card-body">
+            <div class="setting-row">
+              <div class="setting-left"><div class="row-title">体系类型</div><div id="sysHint" class="hint"></div></div>
+              <div id="sysSeg" class="segmented"></div>
+            </div>
+            <hr>
+            <div class="setting-row">
+              <div class="setting-left"><div class="row-title">自旋参数</div><div id="spinHint" class="hint"></div></div>
+              <div id="spinSeg" class="segmented"></div>
+            </div>
+            <div id="spinPanel" class="sub-panel hidden"></div>
+            <div id="llmPanel" class="sub-panel hidden">
+              <div class="llm-head">
+                <label class="row-key">补充说明</label>
+                <input id="llmHint" placeholder="补充说明，如：Ni 为 +2 价，反铁磁">
+                <button id="llmBtn" class="ghost" type="button">开始分析</button>
+              </div>
+              <div id="llmBox" class="result-box"></div>
+            </div>
+            <hr>
+            <div class="setting-row">
+              <div class="setting-left"><div class="row-title">DFT+U 参数</div><div id="uHint" class="hint"></div></div>
+              <div id="uSeg" class="segmented"></div>
+            </div>
+            <div id="uPanel" class="sub-panel hidden"></div>
+            <hr>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">电荷混合 parameters-MIX</div><div id="mixHint" class="hint"></div></div>
+              <label class="switch"><input type="checkbox" id="mixOn"><span></span></label>
+            </div>
+            <div id="mixPanel" class="sub-panel hidden"></div>
+            <hr>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">细 FFT 网格 parameters-NGXF</div><div id="ngxfHint" class="hint"></div></div>
+              <label class="switch"><input type="checkbox" id="ngxfOn"><span></span></label>
+            </div>
+            <div id="ngxfPanel" class="sub-panel hidden"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><span class="step">4</span><h2>K 点与赝势</h2></div>
+          <div class="card-body">
+            <div class="setting-row" id="kmeshRow">
+              <div class="setting-left"><div class="row-title">K 点密度（1/Å，越小越密）</div><div id="kHint" class="hint"></div></div>
+              <input id="kdens" class="num-input" type="number" min="0.005" max="0.5" step="0.005">
+            </div>
+            <div class="setting-row hidden" id="klineRow">
+              <div class="setting-left"><div class="row-title">能带路径每段插点数</div><div id="klineHint" class="hint"></div></div>
+              <input id="perSeg" class="num-input" type="number" min="5" max="200" step="5">
+            </div>
+            <hr>
+            <div class="setting-row">
+              <div class="setting-left"><div class="row-title">赝势库</div><div id="potHint" class="hint"></div></div>
+              <div class="inline-controls">
+                <input id="potcarDir" class="wide-input" placeholder="赝势库目录">
+                <button id="browsePotcar" class="ghost" type="button">浏览…</button>
+              </div>
+            </div>
+            <div id="potcarGrid" class="sub-panel"></div>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">去除 SHA256 / COPYR 行</div><div id="cleanHint" class="hint"></div></div>
+              <label class="switch"><input type="checkbox" id="clean"><span></span></label>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><span class="step">5</span><h2>计算条件</h2></div>
+          <div class="card-body">
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">隐式溶剂化 VASPsol</div><div id="solHint" class="hint"></div></div>
+              <label class="switch"><input type="checkbox" id="solvation"><span></span></label>
+            </div>
+            <hr>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">电场 E-field</div></div>
+              <label class="switch"><input type="checkbox" id="efieldOn"><span></span></label>
+            </div>
+            <div id="efieldPanel" class="sub-panel hidden">
+              <label class="field"><span>EFIELD (V/Å)</span><input id="efieldValue" type="number" min="-1" max="1" step="0.01"></label>
+              <label class="field"><span>IDIPOL</span>
+                <select id="efieldDir">
+                  <option value="1">1 (a 方向)</option>
+                  <option value="2">2 (b 方向)</option>
+                  <option value="3">3 (c 方向)</option>
+                </select>
+              </label>
+            </div>
+            <hr>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">恒电势 CP-VASP</div></div>
+              <label class="switch"><input type="checkbox" id="cpOn"><span></span></label>
+            </div>
+            <div id="cpPanel" class="sub-panel hidden">
+              <label class="field"><span>电势 U (V vs SHE)</span><input id="cpU" type="number" min="-5" max="5" step="0.1"></label>
+              <label class="field"><span>TARGETMU (eV)</span><input id="cpMu" type="number" min="-10" max="0" step="0.1"></label>
+              <div class="hint">TARGETMU = -4.43 − U</div>
+            </div>
+            <hr>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">并行参数 KPAR / NPAR</div></div>
+              <label class="switch"><input type="checkbox" id="parallelOn"><span></span></label>
+            </div>
+            <div id="parallelPanel" class="sub-panel hidden">
+              <label class="field"><span>KPAR</span><input id="kpar" type="number" min="1" max="512" step="1"></label>
+              <label class="field"><span>NPAR</span><input id="npar" type="number" min="1" max="512" step="1"></label>
+            </div>
+            <hr>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">创建 lobsterin（LOBSTER 成键分析）</div><div id="lobHint" class="hint"></div></div>
+              <label class="switch"><input type="checkbox" id="lobsterOn"><span></span></label>
+            </div>
+            <div id="lobsterPanel" class="sub-panel hidden">
+              <label class="field wide"><span>cohpbetween</span><input id="lobsterPairs" placeholder="原子对（编号从 1 开始），如 37-38, 12-15"></label>
+              <div class="hint">在 3D 视图悬停可查看原子编号；超过 4 Å 会提醒</div>
+            </div>
+            <hr>
+            <div class="setting-row switch-row">
+              <div class="setting-left"><div class="row-title">创建 OPTCELL（限定晶格方向弛豫）</div><div id="optHint" class="hint"></div></div>
+              <label class="switch"><input type="checkbox" id="optcellOn"><span></span></label>
+            </div>
+            <div id="optcellPanel" class="sub-panel hidden">
+              <div id="optcellGrid" class="optcell-grid"></div>
+              <div class="hint">1 = 该分量可变，0 = 固定；需要编译了 OPTCELL 补丁的 VASP，且 ISIF = 3</div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </section>
+
+    <section id="workspace" class="pane workspace-pane">
+      <div class="card workspace-card">
+        <div class="card-head tabs-head">
+          <div id="tabs" class="tabs"></div>
+        </div>
+        <div class="card-body workspace-body">
+          <div id="pageStructure" class="page">
+            <div class="viewer-toolbar">
+              <div id="modeSeg" class="segmented"></div>
+              <div class="spacer"></div>
+              <button id="viewFront" class="ghost" type="button">正视</button>
+              <button id="viewRight" class="ghost" type="button">侧视</button>
+              <button id="viewTop" class="ghost" type="button">俯视</button>
+            </div>
+            <div class="viewer-options">
+              <span class="row-key">周期性</span>
+              <label class="toggle"><input type="checkbox" id="boundary"><span>边界等价原子</span></label>
+              <span class="row-key">跨边界成键</span>
+              <div id="bondSeg" class="segmented small"></div>
+            </div>
+            <div class="viewer-frame">
+              <iframe id="viewerFrame" title="3D 结构视图" src="{{viewerUri}}"></iframe>
+            </div>
+            <div class="sub-panel viewer-tools">
+              <div class="tools-row">
+                <span id="fixStats" class="row-title">未加载结构</span>
+                <div class="spacer"></div>
+                <button id="fixAll" class="ghost" type="button" disabled>全部固定</button>
+                <button id="releaseAll" class="ghost" type="button" disabled>全部弛豫</button>
+                <button id="undoBtn" class="ghost" type="button" disabled>↶ 撤销</button>
+                <button id="redoBtn" class="ghost" type="button" disabled>↷ 重做</button>
+              </div>
+              <div class="tools-row">
+                <span class="row-key">底部</span>
+                <input id="layerN" class="tiny-input" type="number" min="1" max="99" value="1">
+                <span class="row-key">层</span>
+                <button id="fixLayers" class="ghost" type="button" disabled>固定</button>
+                <span id="layerInfo" class="hint"></span>
+                <div class="spacer"></div>
+                <input id="indexInput" class="index-input" placeholder="编号，如 1-8, 12">
+                <button id="indexFix" class="ghost" type="button" disabled>固定</button>
+                <button id="indexRelease" class="ghost" type="button" disabled>弛豫</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="pageFile" class="page hidden">
+            <div class="editor-bar">
+              <span id="fileState" class="state-chip">自动生成 · 未保存</span>
+              <div class="spacer"></div>
+              <button id="revertBtn" class="ghost hidden" type="button">恢复自动生成</button>
+              <button id="findBtn" class="ghost" type="button">查找</button>
+              <button id="copyBtn" class="ghost" type="button">复制</button>
+              <button id="saveAsBtn" class="ghost" type="button">另存为…</button>
+              <button id="saveBtn" class="ghost" type="button">保存</button>
+            </div>
+            <div id="fileInfo" class="hint file-info"></div>
+            <div id="findBar" class="find-bar hidden">
+              <input id="findQuery" placeholder="查找…   Enter 下一个 · Shift+Enter 上一个 · Esc 关闭">
+              <button id="findCase" class="mini-toggle" type="button" title="区分大小写">Aa</button>
+              <span id="findCount" class="hint"></span>
+              <button id="findPrev" class="ghost" type="button">↑</button>
+              <button id="findNext" class="ghost" type="button">↓</button>
+              <button id="findClose" class="ghost" type="button">✕</button>
+            </div>
+            <div id="editorWrap" class="editor-wrap">
+              <pre id="highlight" class="highlight" aria-hidden="true"></pre>
+              <textarea id="editor" class="editor" spellcheck="false" wrap="off"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="bottomBar">
+    <span class="row-key">输出到</span>
+    <span id="outLabel" class="out-path">结构文件所在目录</span>
+    <button id="openFolder" class="ghost" type="button" disabled>打开文件夹</button>
+    <span class="divider"></span>
+    <div id="fileToggles" class="file-toggles"></div>
+    <span class="divider"></span>
+    <span id="statusText" class="hint status-text"></span>
+    <button id="generateBtn" class="primary" type="button" disabled>⚡ 生成作业文件</button>
+  </footer>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<div id="fatal" class="fatal hidden">
+  <div class="fatal-card">
+    <h2 id="fatalTitle">无法启动生成器</h2>
+    <pre id="fatalMessage"></pre>
+    <div class="fatal-actions">
+      <button id="fatalInstall" class="secondary" type="button">安装依赖</button>
+      <button id="fatalRetry" class="primary" type="button">重试</button>
+      <button id="fatalSettings" class="ghost" type="button">打开设置</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{mainUri}}"></script>
+</body>
+</html>

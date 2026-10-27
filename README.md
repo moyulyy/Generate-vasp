@@ -12,7 +12,7 @@
 ![PySide6](https://img.shields.io/badge/GUI-PySide6%20%2B%203Dmol.js-41CD52)
 [![License](https://img.shields.io/github/license/moyulyy/Generate-vasp?color=lightgrey)](LICENSE)
 
-[下载便携版](https://github.com/moyulyy/Generate-vasp/releases/latest) · [快速开始](#快速开始) · [使用流程](#使用流程) · [命令行脚本](#命令行脚本)
+[下载便携版](https://github.com/moyulyy/Generate-vasp/releases/latest) · [下载 VS Code 插件](https://github.com/moyulyy/Generate-vasp/releases/latest) · [快速开始](#快速开始) · [使用流程](#使用流程) · [命令行脚本](#命令行脚本)
 
 </div>
 
@@ -29,11 +29,12 @@
 | ⚙️ **计算条件** | 隐式溶剂化、电场、恒电势 CP-VASP、并行参数、电荷混合、细 FFT 网格，以及 lobsterin、OPTCELL |
 | ✍️ **可编辑输出** | 每个文件都是带高亮与查找的编辑器；手动修改会保留，之后改动的选项仍会合并进来 |
 
-项目由三部分组成：
+项目由以下部分组成：
 
 - **`gui/`**：桌面图形界面（PySide6 + 3Dmol.js），日常使用的主入口。
 - **`script/`**：可单独在命令行使用的参数脚本，GUI 也直接调用它们。
 - **`IncarTemplates/`、`ConditionsTemplates/`**：INCAR 模板与附加条件模板，改模板即可改变生成结果。
+- **`vscode-extension/`**：VS Code 插件，复用 `gui/` 与 `script/` 的业务逻辑，在编辑器区域提供 Webview 页面。
 
 ## 快速开始
 
@@ -71,6 +72,22 @@ Windows 下也可以：
 - 在已激活的环境中运行 `powershell -ExecutionPolicy Bypass -File gui\create_shortcut.ps1`，会在桌面生成带图标的快捷方式。更换 Python 环境后重新运行即可。
 
 赝势文件（POTCAR）受 VASP 许可约束，本项目不包含。需要自备赝势库，目录结构为 `赝势库/标签/POTCAR`（如 `POTCAR/Ni_pv/POTCAR`）。
+
+### 方式三：VS Code 插件
+
+`vscode-extension/` 把同一套生成逻辑封装为 VS Code 扩展：活动栏中的 Generate-VASP 按钮打开侧边栏入口，点击「打开生成器」后在编辑器区域显示内嵌页面（3D 结构、参数、可编辑输出）。
+
+也可以直接从 [Releases](https://github.com/moyulyy/Generate-vasp/releases/tag/v1.0.1) 下载 `generate-vasp-1.0.1.vsix`，在 VS Code「扩展」视图右上角 `…` → 「从 VSIX 安装…」安装。插件需要 VS Code ≥ 1.85、本机 Python ≥ 3.9、`numpy` 与 `ase`（`spglib`、`seekpath` 可选）；POTCAR、Python 运行时与 LLM 密钥不包含在 VSIX 中。
+
+从源码调试：
+
+```bash
+cd vscode-extension
+npm install
+npm run compile
+```
+
+用 VS Code 打开 `vscode-extension/` 后按 `F5` 调试，或使用 `npx @vscode/vsce package` 打包 VSIX。详细说明见 [vscode-extension/README.md](vscode-extension/README.md)。
 
 ### LLM 配置
 
@@ -286,7 +303,9 @@ Generate-vasp/
 ### v1.0.1
 
 便携包下载：[`Generate-VASP-1.0.1-win64.zip`](https://github.com/moyulyy/Generate-vasp/releases/tag/v1.0.1)
+VS Code 插件下载：[`generate-vasp-1.0.1.vsix`](https://github.com/moyulyy/Generate-vasp/releases/tag/v1.0.1)
 
+- 新增 **VS Code 插件** `generate-vasp-1.0.1.vsix`：活动栏入口与编辑器区域 Webview，复用同一套生成逻辑；支持 3D 固定原子、12 个计算项目、LLM 自旋分析与可编辑输出。
 - 修复打包版读取 CIF 报 `ase\spacegroup\spacegroup.dat` 不存在的问题：打包时收集 ASE 的数据文件。
 - `llm_config.json` 容错：结尾多余的逗号不再导致被误判为“未配置 LLM”，格式错误时界面会显示具体原因。
 - 本地打包会复用开发机的 `llm_config.json`，让便携版与源码运行一致；发行压缩包仍不包含任何密钥。
