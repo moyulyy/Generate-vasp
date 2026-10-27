@@ -136,6 +136,8 @@ npx @vscode/vsce package
 
 `vscode:prepublish` 会先同步资源再编译。打包结果 `generate-vasp-<版本>.vsix` 可用「扩展 → … → 从 VSIX 安装」安装。发行包不包含 `llm_config.json`、POTCAR 或 Python 运行时。
 
+> 安装或更新 VSIX 后，如果活动栏没有出现 Generate-VASP 图标，请执行 `Developer: Reload Window`。若图标被手动隐藏，右键活动栏并勾选 Generate-VASP；也可以从命令面板运行 `Generate-VASP: 打开生成器`。
+
 ## 已知限制
 
 - 需要本机可用的 Python 与 `numpy`/`ase`；扩展不会替代 VASP 或 POTCAR。

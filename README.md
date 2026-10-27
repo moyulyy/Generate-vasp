@@ -306,6 +306,7 @@ Generate-vasp/
 VS Code 插件下载：[`generate-vasp-1.0.1.vsix`](https://github.com/moyulyy/Generate-vasp/releases/tag/v1.0.1)
 
 - 新增 **VS Code 插件** `generate-vasp-1.0.1.vsix`：活动栏入口与编辑器区域 Webview，复用同一套生成逻辑；支持 3D 固定原子、12 个计算项目、LLM 自旋分析与可编辑输出。
+- 修复 VS Code 活动栏图标在深色主题下不可见的问题；安装或更新后如未显示图标，请执行 `Developer: Reload Window`，或右键活动栏勾选 Generate-VASP。
 - 修复打包版读取 CIF 报 `ase\spacegroup\spacegroup.dat` 不存在的问题：打包时收集 ASE 的数据文件。
 - `llm_config.json` 容错：结尾多余的逗号不再导致被误判为“未配置 LLM”，格式错误时界面会显示具体原因。
 - 本地打包会复用开发机的 `llm_config.json`，让便携版与源码运行一致；发行压缩包仍不包含任何密钥。
