@@ -133,7 +133,7 @@ vscode-extension/
 │   ├── index.html         生成器页面骨架
 │   ├── main.js            状态同步、设置卡片、编辑器、3D 桥
 │   ├── style.css          iOS 浅色主题
-│   ├── viewer.html/.js    3Dmol iframe 视图
+│   ├── viewer.js         3Dmol 视图（直接嵌入主页面）
 │   └── 3Dmol-min.js       本地 3Dmol（同步复制）
 ├── python/
 │   ├── service.py         stdio JSON-RPC 常驻服务

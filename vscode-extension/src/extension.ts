@@ -517,6 +517,8 @@ class VaspPanel implements vscode.Disposable {
       .replace(/\{\{cspSource\}\}/g, webview.cspSource)
       .replace(/\{\{styleUri\}\}/g, uri('style.css'))
       .replace(/\{\{mainUri\}\}/g, uri('main.js'))
+      .replace(/\{\{threeDmolUri\}\}/g, uri('3Dmol-min.js'))
+      .replace(/\{\{viewerJsUri\}\}/g, uri('viewer.js'))
       .replace(/\{\{viewerUri\}\}/g, uri('viewer.html'))
       .replace(/\{\{iconUri\}\}/g, uri('app.png'));
   }

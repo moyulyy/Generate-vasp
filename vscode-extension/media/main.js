@@ -8,7 +8,6 @@ const vscode = typeof acquireVsCodeApi === 'function'
 const $ = (id) => document.getElementById(id);
 const editor = $('editor');
 const highlight = $('highlight');
-const viewerFrame = $('viewerFrame');
 
 const S = {
   initialized: false,
@@ -160,9 +159,8 @@ function host(action, payload = {}) {
 }
 
 function sendViewer(message) {
-  if (!viewerFrame || !viewerFrame.contentWindow) return;
   try {
-    viewerFrame.contentWindow.postMessage(message, '*');
+    window.postMessage(message, '*');
   } catch (error) {
     console.error(error);
   }
@@ -232,6 +230,12 @@ window.addEventListener('message', (event) => {
       break;
     case 'settingsChanged':
       onSettingsChanged(message);
+      break;
+    case 'ready':
+    case 'selectAtoms':
+    case 'requestMode':
+    case 'reportError':
+      handleViewerMessage(message);
       break;
     default:
       break;
@@ -2382,11 +2386,6 @@ function bindEvents() {
       event.stopPropagation();
       void saveCurrent();
     }
-  });
-
-  window.addEventListener('message', (event) => {
-    if (event.source !== viewerFrame.contentWindow) return;
-    handleViewerMessage(event.data);
   });
 
   document.addEventListener('keydown', (event) => {

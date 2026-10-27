@@ -230,7 +230,15 @@
               <div id="bondSeg" class="segmented small"></div>
             </div>
             <div class="viewer-frame">
-              <iframe id="viewerFrame" title="3D 结构视图" src="{{viewerUri}}"></iframe>
+              <div id="viewer"></div>
+              <div id="empty"><div class="orb"></div><strong>从一个结构开始</strong><span>从当前标签页或项目目录选择结构文件</span></div>
+              <div id="layer"><div id="rect"></div></div>
+              <aside id="legend" hidden>
+                <div id="entries"></div>
+                <div class="key">◍ 黑色网格 = 固定　◍ 橙色 = 部分固定</div>
+                <div class="key" id="pbckey" hidden></div>
+              </aside>
+              <div id="hint">拖动旋转 · 滚轮缩放 · 右键平移</div>
             </div>
             <div class="sub-panel viewer-tools">
               <div class="tools-row">
@@ -310,6 +318,8 @@
   </div>
 </div>
 
+<script src="{{threeDmolUri}}"></script>
 <script src="{{mainUri}}"></script>
+<script src="{{viewerJsUri}}"></script>
 </body>
 </html>

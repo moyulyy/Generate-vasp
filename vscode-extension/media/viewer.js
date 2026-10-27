@@ -16,7 +16,7 @@ const STICK = 0.12;
 let drag = null;
 
 function toParent(type, payload) {
-    try { parent.postMessage({type, payload}, '*'); } catch (e) { /* ignore */ }
+    try { window.postMessage({type, payload}, '*'); } catch (e) { /* ignore */ }
 }
 
 const bridge = {
