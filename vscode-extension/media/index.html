@@ -27,14 +27,31 @@
     <section id="settingsPane" class="pane settings-pane">
       <div class="pane-scroll">
 
-        <section class="card">
+        <section class="card" id="cardStructure">
           <div class="card-head"><span class="step">1</span><h2>结构文件</h2></div>
           <div class="card-body">
-            <button id="dropZone" class="dropzone" type="button">
-              <span class="drop-icon">⇧</span>
-              <strong>点击选择，或把 CIF / POSCAR / CONTCAR 拖到这里</strong>
-              <span class="hint">CIF 会自动转换为 POSCAR · 输出写到同一目录</span>
-            </button>
+            <div id="sourcePanel" class="source-panel">
+              <div id="openStructureBox" class="source-box hidden">
+                <div class="source-head">
+                  <span class="row-key">VS Code 中打开的结构文件</span>
+                  <button id="refreshTabs" class="ghost" type="button">刷新</button>
+                </div>
+                <select id="openStructureSelect" class="wide-select"></select>
+                <div id="openStructureHint" class="hint"></div>
+              </div>
+              <div id="treeBox" class="tree-box">
+                <div class="source-head">
+                  <span class="row-key">项目目录</span>
+                  <button id="toggleTree" class="ghost" type="button">收起</button>
+                </div>
+                <div id="tree" class="tree"></div>
+                <div id="treeHint" class="hint"></div>
+              </div>
+              <div class="source-actions">
+                <button id="pickFile" class="ghost" type="button">选择文件…</button>
+                <span class="hint">默认使用当前打开的 POSCAR / CIF 标签页；也可以从项目目录选择或拖入文件。</span>
+              </div>
+            </div>
             <div id="fileBox" class="file-box hidden">
               <div class="file-chip">
                 <div class="file-meta">

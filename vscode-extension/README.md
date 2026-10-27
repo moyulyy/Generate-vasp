@@ -61,11 +61,12 @@ npm run compile      # tsc 严格模式编译
 ## 使用
 
 1. 点击活动栏的 Generate-VASP 图标，在侧边栏点击「打开生成器」；或按 `Ctrl+Alt+V`（macOS `Cmd+Alt+V`）。
-2. 点击 / 拖入 CIF、POSCAR 或 CONTCAR。CIF 会自动转换为 POSCAR，同种元素不连续时会重排。
-3. 选择计算项目、体系类型、自旋 / DFT+U、K 点密度、赝势与计算条件。
-4. 在「结构」页固定原子（点选、框选、底部 N 层、编号输入），或使用全部固定 / 弛豫、撤销 / 重做。
-5. 在文件页检查并编辑输出；顶部显示「自动生成 / 手动编辑」与「已保存 / 未保存」。
-6. 点击「生成作业文件」（`Ctrl+Enter`）。文件写到结构文件所在目录；底部开关决定写哪些文件。
+2. 结构文件优先从 VS Code 当前打开的 CIF / POSCAR / CONTCAR 标签页加载；有多个时在「结构文件」卡片顶部的下拉栏选择。
+3. 没有打开的结构文件时，从项目根目录的目录树选择；也可以点击「选择文件…」或把文件拖入。CIF 会自动转换为 POSCAR，同种元素不连续时会重排。
+4. 选择计算项目、体系类型、自旋 / DFT+U、K 点密度、赝势与计算条件。
+5. 在「结构」页固定原子（点选、框选、底部 N 层、编号输入），或使用全部固定 / 弛豫、撤销 / 重做。
+6. 在文件页检查并编辑输出；顶部显示「自动生成 / 手动编辑」与「已保存 / 未保存」。
+7. 点击「生成作业文件」（`Ctrl+Enter`）。文件写到结构文件所在目录；底部开关决定写哪些文件。
 
 ### 快捷键
 
@@ -90,6 +91,24 @@ npm run compile      # tsc 严格模式编译
 | `generateVasp.autoLoadLastStructure` | `false` | 打开面板时自动载入上次结构 |
 
 赝势库、显示选项与最近结构保存在扩展的 `globalState` 中，不写入工作区文件。
+
+当前项目可以在工作区 `.vscode/settings.json`（设置页「工作区」）中填入解释器、赝势库与 `llm_config.json` 路径，例如：
+
+```json
+{
+  "generateVasp.pythonPath": "C:\\Python311\\python.exe",
+  "generateVasp.potcarPath": "D:\\path\\to\\POTCAR",
+  "generateVasp.llmConfigPath": "D:\\path\\to\\llm_config.json"
+}
+```
+
+扩展只读取这些路径，不会把 API Key 写入设置或日志。设置页「用户」显示扩展默认值；当前项目的实际值建议放在「工作区」。
+
+### 本版改进
+
+- 结构文件默认读取 VS Code 已打开的 CIF / POSCAR / CONTCAR 标签页；无打开文件时显示项目根目录树。
+- 隐藏设置栏的滚动条，修复编辑器语法高亮与文本光标错位。
+- 支持工作区设置覆盖本机解释器、赝势库与 LLM 配置路径。
 
 ### LLM 自旋分析
 

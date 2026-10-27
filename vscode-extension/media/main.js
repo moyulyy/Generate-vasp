@@ -38,6 +38,9 @@ const S = {
   structurePayload: null,
   pendingOpenPath: null,
   lastSource: null,
+  structureSources: { open: [], root: '' },
+  tree: { root: '', nodes: new Map(), expanded: new Set(), loading: new Set() },
+  treeVisible: true,
   dirtyFile: null,
   editTimer: null,
   optionsTimer: null,
@@ -178,6 +181,9 @@ window.addEventListener('message', (event) => {
     case 'openPath':
       queueOpen(message.path);
       break;
+    case 'structureTabs':
+      onStructureTabs(message);
+      break;
     case 'rpcResult': {
       const pending = rpcPending.get(message.id);
       if (!pending) break;
@@ -224,6 +230,11 @@ window.addEventListener('message', (event) => {
 async function onInit(message) {
   S.check = message.check || { ok: false, error: '后端没有返回环境信息' };
   S.settings = message.settings || {};
+  S.structureSources = message.structures || { open: [], root: '' };
+  S.treeVisible = !S.structureSources.open.length;
+  if (S.tree.root !== S.structureSources.root) {
+    S.tree = { root: S.structureSources.root, nodes: new Map(), expanded: new Set(), loading: new Set() };
+  }
   updateEnvBadge();
   if (!S.check.ok) {
     showFatal('Python 环境未就绪', S.check.error || '请安装 numpy / ase 并重试。');
@@ -243,6 +254,23 @@ async function onInit(message) {
     const path = S.pendingOpenPath;
     S.pendingOpenPath = null;
     await loadStructure(path);
+  }
+  renderStructureSources();
+}
+
+function onStructureTabs(message) {
+  const previousCount = (S.structureSources.open || []).length;
+  S.structureSources = { open: message.open || [], root: message.root || '' };
+  if (S.tree.root !== S.structureSources.root) {
+    S.tree = { root: S.structureSources.root, nodes: new Map(), expanded: new Set(), loading: new Set() };
+  }
+  if (!S.structureSources.open.length) S.treeVisible = true;
+  else if (previousCount === 0) S.treeVisible = false;
+  renderStructureSources();
+  if (!S.lastSource && S.structureSources.open.length && S.initialized && !S.initializing) {
+    const active = S.structureSources.open.find((item) => item.active)?.path
+      || S.structureSources.open[0]?.path;
+    if (active) void loadStructure(active);
   }
 }
 
@@ -377,6 +405,7 @@ function applyState(state) {
 function renderAll(state) {
   updateEnvBadge();
   renderSummary();
+  renderStructureSources();
   renderProjects();
   renderSettings();
   renderViewerOptions();
@@ -447,7 +476,6 @@ function renderHints() {
 function renderSummary() {
   const summary = S.summary || { loaded: false };
   const loaded = Boolean(summary.loaded);
-  $('dropZone').classList.toggle('hidden', loaded);
   $('fileBox').classList.toggle('hidden', !loaded);
   if (!loaded) {
     $('chips').replaceChildren();
@@ -475,6 +503,250 @@ function renderSummary() {
     addChip(`真空 a/b/c  ${summary.gaps.a.toFixed(1)} / ${summary.gaps.b.toFixed(1)} / ${summary.gaps.c.toFixed(1)} Å`);
   }
   $('chips').replaceChildren(...chips);
+}
+
+/* ------------------------------------------------------------------ 结构文件来源 */
+function baseName(file) {
+  const text = String(file || '').replace(/[\\/]+$/, '');
+  return text.split(/[\\/]/).pop() || text;
+}
+
+function renderStructureSources() {
+  const sources = S.structureSources || { open: [], root: '' };
+  const open = Array.isArray(sources.open) ? sources.open : [];
+  const box = $('openStructureBox');
+  const select = $('openStructureSelect');
+  const hint = $('openStructureHint');
+  box.classList.toggle('hidden', !open.length);
+  if (open.length) {
+    const current = S.lastSource || '';
+    const key = JSON.stringify([open.map((item) => [item.path, item.name, item.relative, item.active]), current]);
+    if (select.dataset.key !== key) {
+      select.replaceChildren();
+      const seen = new Set();
+      for (const item of open) {
+        const option = document.createElement('option');
+        option.value = item.path;
+        option.textContent = `${item.name}${item.relative && item.relative !== item.name ? ' — ' + item.relative : ''}${item.active ? ' · 当前标签页' : ''}`;
+        select.append(option);
+        seen.add(item.path);
+      }
+      if (current && !seen.has(current)) {
+        const option = document.createElement('option');
+        option.value = current;
+        option.textContent = `${baseName(current)} — 当前加载`;
+        select.append(option);
+      }
+      select.dataset.key = key;
+    }
+    const preferred = current && [...select.options].some((item) => item.value === current)
+      ? current
+      : (open.find((item) => item.active)?.path || open[0]?.path || '');
+    if (document.activeElement !== select && select.value !== preferred) select.value = preferred;
+    hint.textContent = `${open.length} 个已打开的结构文件 · 默认使用当前标签页`;
+    hint.classList.remove('hidden');
+  } else {
+    select.dataset.key = '';
+    hint.textContent = '';
+    hint.classList.add('hidden');
+  }
+
+  const root = sources.root || '';
+  if (S.tree.root !== root) {
+    S.tree = { root, nodes: new Map(), expanded: new Set(), loading: new Set() };
+  }
+  const treeBox = $('treeBox');
+  const tree = $('tree');
+  const treeHint = $('treeHint');
+  const toggle = $('toggleTree');
+  treeBox.classList.remove('hidden');
+  if (!root) {
+    tree.classList.add('hidden');
+    toggle.classList.add('hidden');
+    treeHint.textContent = '没有打开的项目文件夹；请使用“选择文件…”。';
+    treeHint.classList.remove('hidden');
+    return;
+  }
+  toggle.classList.remove('hidden');
+  tree.classList.toggle('hidden', !S.treeVisible);
+  toggle.textContent = S.treeVisible ? '收起' : '展开';
+  if (!S.treeVisible) {
+    treeHint.textContent = '从项目目录选择结构文件';
+    treeHint.classList.remove('hidden');
+    return;
+  }
+  if (!S.tree.nodes.has(root) && !S.tree.loading.has(root)) {
+    S.tree.expanded.add(root);
+    void loadTreeDir(root);
+  }
+  renderTree();
+}
+
+function renderTree() {
+  const tree = $('tree');
+  const root = S.tree.root;
+  if (!root) {
+    tree.replaceChildren();
+    return;
+  }
+  const scroll = tree.scrollTop;
+  tree.replaceChildren();
+  const expanded = S.tree.expanded.has(root);
+  const row = document.createElement('div');
+  row.className = 'tree-row tree-root';
+  const toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'tree-toggle';
+  toggle.textContent = S.tree.loading.has(root) ? '…' : expanded ? '▾' : '▸';
+  const name = document.createElement('span');
+  name.className = 'tree-name';
+  name.textContent = baseName(root) || root;
+  const pathLabel = document.createElement('span');
+  pathLabel.className = 'tree-path';
+  pathLabel.textContent = '项目根目录';
+  pathLabel.title = root;
+  row.append(toggle, name, pathLabel);
+  row.addEventListener('click', () => toggleTreeDir(root));
+  tree.append(row);
+  if (expanded) renderTreeDir(root, 0, tree);
+  const node = S.tree.nodes.get(root);
+  const hint = $('treeHint');
+  if (S.tree.loading.has(root)) hint.textContent = '正在读取项目目录…';
+  else if (node && node.error) hint.textContent = node.error;
+  else if (node && !node.dirs.length && !node.files.length) hint.textContent = '根目录没有直接找到结构文件，展开子目录继续查找。';
+  else if (node && node.truncated) hint.textContent = '目录条目过多，只显示前 300 项。';
+  else hint.textContent = '点击目录展开，点击结构文件加载。';
+  hint.classList.remove('hidden');
+  tree.scrollTop = scroll;
+}
+
+function treeRow(level) {
+  const row = document.createElement('div');
+  row.className = 'tree-row';
+  row.style.paddingLeft = `${level * 14}px`;
+  return row;
+}
+
+function treePathLabel(file) {
+  const label = document.createElement('span');
+  label.className = 'tree-path';
+  label.textContent = file.relative || '';
+  label.title = file.path || '';
+  return label;
+}
+
+function renderTreeDir(dir, level, container) {
+  const node = S.tree.nodes.get(dir);
+  if (!node) {
+    if (S.tree.loading.has(dir)) {
+      const row = treeRow(level + 1);
+      const note = document.createElement('span');
+      note.className = 'tree-note';
+      note.textContent = '正在读取…';
+      row.append(note);
+      container.append(row);
+    }
+    return;
+  }
+  if (node.error) {
+    const row = treeRow(level + 1);
+    const note = document.createElement('span');
+    note.className = 'tree-note error';
+    note.textContent = node.error;
+    row.append(note);
+    container.append(row);
+    return;
+  }
+  for (const child of node.dirs) {
+    const expanded = S.tree.expanded.has(child.path);
+    const row = treeRow(level + 1);
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'tree-toggle';
+    toggle.textContent = S.tree.loading.has(child.path) ? '…' : expanded ? '▾' : '▸';
+    const name = document.createElement('span');
+    name.className = 'tree-name';
+    name.textContent = child.name;
+    row.append(toggle, name, treePathLabel(child));
+    row.addEventListener('click', () => toggleTreeDir(child.path));
+    container.append(row);
+    if (expanded) renderTreeDir(child.path, level + 1, container);
+  }
+  for (const file of node.files) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'tree-row tree-file-row';
+    row.style.paddingLeft = `${(level + 1) * 14}px`;
+    if (S.lastSource === file.path) row.classList.add('selected');
+    const spacer = document.createElement('span');
+    spacer.className = 'tree-toggle';
+    spacer.textContent = '';
+    const name = document.createElement('span');
+    name.className = 'tree-file';
+    name.textContent = file.name;
+    row.append(spacer, name, treePathLabel(file));
+    row.addEventListener('click', () => { void loadStructure(file.path); });
+    container.append(row);
+  }
+  if (!node.dirs.length && !node.files.length) {
+    const row = treeRow(level + 1);
+    const note = document.createElement('span');
+    note.className = 'tree-note';
+    note.textContent = '（空）';
+    row.append(note);
+    container.append(row);
+  }
+}
+
+function toggleTreeDir(dir) {
+  if (S.tree.expanded.has(dir)) {
+    S.tree.expanded.delete(dir);
+  } else {
+    S.tree.expanded.add(dir);
+    if (!S.tree.nodes.has(dir)) void loadTreeDir(dir);
+  }
+  renderTree();
+}
+
+async function loadTreeDir(dir) {
+  if (!dir || S.tree.nodes.has(dir) || S.tree.loading.has(dir)) return;
+  S.tree.loading.add(dir);
+  renderTree();
+  try {
+    const result = await host('listDirectory', { path: dir });
+    S.tree.nodes.set(dir, {
+      dirs: result.dirs || [],
+      files: result.files || [],
+      truncated: Boolean(result.truncated),
+      error: '',
+    });
+  } catch (error) {
+    S.tree.nodes.set(dir, { dirs: [], files: [], truncated: false, error: error.message });
+  } finally {
+    S.tree.loading.delete(dir);
+    renderTree();
+  }
+}
+
+async function refreshOpenStructures() {
+  try {
+    const result = await host('getOpenStructures');
+    onStructureTabs({ open: result.open || [], root: result.root || '' });
+  } catch (error) {
+    showToast(error.message, true);
+  }
+}
+
+function toggleTreeVisible() {
+  S.treeVisible = !S.treeVisible;
+  if (S.treeVisible) {
+    const root = S.tree.root;
+    if (root && !S.tree.nodes.has(root) && !S.tree.loading.has(root)) {
+      S.tree.expanded.add(root);
+      void loadTreeDir(root);
+    }
+  }
+  renderStructureSources();
 }
 
 /* ------------------------------------------------------------------ 计算项目 */
@@ -1845,7 +2117,13 @@ function bindEvents() {
   $('openSettings').addEventListener('click', () => {
     void host('openSettings').catch((error) => showToast(error.message, true));
   });
-  $('dropZone').addEventListener('click', () => { void pickStructure(); });
+  $('pickFile').addEventListener('click', () => { void pickStructure(); });
+  $('refreshTabs').addEventListener('click', () => { void refreshOpenStructures(); });
+  $('toggleTree').addEventListener('click', toggleTreeVisible);
+  $('openStructureSelect').addEventListener('change', () => {
+    const value = $('openStructureSelect').value;
+    if (value) void loadStructure(value);
+  });
   $('changeFile').addEventListener('click', () => { void pickStructure(); });
   $('removeFile').addEventListener('click', () => { void clearStructure(); });
   $('browsePotcar').addEventListener('click', async () => {
@@ -2139,19 +2417,19 @@ function bindEvents() {
   ['dragenter', 'dragover'].forEach((name) => {
     document.body.addEventListener(name, (event) => {
       event.preventDefault();
-      $('dropZone').classList.add('drag');
+      $('sourcePanel').classList.add('drag');
     });
   });
   ['dragleave', 'drop'].forEach((name) => {
     document.body.addEventListener(name, (event) => {
       event.preventDefault();
-      $('dropZone').classList.remove('drag');
+      $('sourcePanel').classList.remove('drag');
     });
   });
   document.body.addEventListener('drop', (event) => {
     const path = pathFromDrop(event);
     if (path) void loadStructure(path);
-    else showToast('无法读取拖入的文件路径，请点击“选择结构文件”', true);
+    else showToast('无法读取拖入的文件路径，请使用“选择文件…”', true);
   });
 }
 

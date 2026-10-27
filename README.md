@@ -75,7 +75,7 @@ Windows 下也可以：
 
 ### 方式三：VS Code 插件
 
-`vscode-extension/` 把同一套生成逻辑封装为 VS Code 扩展：活动栏中的 Generate-VASP 按钮打开侧边栏入口，点击「打开生成器」后在编辑器区域显示内嵌页面（3D 结构、参数、可编辑输出）。
+`vscode-extension/` 把同一套生成逻辑封装为 VS Code 扩展：活动栏中的 Generate-VASP 按钮打开侧边栏入口，点击「打开生成器」后在编辑器区域显示内嵌页面（3D 结构、参数、可编辑输出）。结构文件默认从当前打开的 CIF / POSCAR / CONTCAR 标签页加载；多个文件用下拉栏切换，没有打开文件时从项目根目录的目录树选择。
 
 也可以直接从 [Releases](https://github.com/moyulyy/Generate-vasp/releases/tag/v1.0.1) 下载 `generate-vasp-1.0.1.vsix`，在 VS Code「扩展」视图右上角 `…` → 「从 VSIX 安装…」安装。插件需要 VS Code ≥ 1.85、本机 Python ≥ 3.9、`numpy` 与 `ase`（`spglib`、`seekpath` 可选）；POTCAR、Python 运行时与 LLM 密钥不包含在 VSIX 中。
 
@@ -306,6 +306,9 @@ Generate-vasp/
 VS Code 插件下载：[`generate-vasp-1.0.1.vsix`](https://github.com/moyulyy/Generate-vasp/releases/tag/v1.0.1)
 
 - 新增 **VS Code 插件** `generate-vasp-1.0.1.vsix`：活动栏入口与编辑器区域 Webview，复用同一套生成逻辑；支持 3D 固定原子、12 个计算项目、LLM 自旋分析与可编辑输出。
+- 结构文件输入改为优先读取 VS Code 已打开的 CIF / POSCAR / CONTCAR 标签页；多个文件用下拉栏切换，无打开文件时显示项目根目录树。
+- 修复编辑器语法高亮与文本光标错位；隐藏设置栏滚动条。
+- 插件设置支持工作区 `.vscode/settings.json`，用于指定当前项目的 Python、赝势库与 LLM 配置路径。
 - 修复 VS Code 活动栏图标在深色主题下不可见的问题；安装或更新后如未显示图标，请执行 `Developer: Reload Window`，或右键活动栏勾选 Generate-VASP。
 - 修复打包版读取 CIF 报 `ase\spacegroup\spacegroup.dat` 不存在的问题：打包时收集 ASE 的数据文件。
 - `llm_config.json` 容错：结尾多余的逗号不再导致被误判为“未配置 LLM”，格式错误时界面会显示具体原因。

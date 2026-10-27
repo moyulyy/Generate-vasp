@@ -73,6 +73,66 @@ async function pickStructureFile(): Promise<string | undefined> {
   return result?.[0]?.fsPath;
 }
 
+type StructureTab = {
+  path: string;
+  name: string;
+  relative: string;
+  active: boolean;
+};
+
+const IGNORED_DIRS = new Set([
+  '.git', 'node_modules', 'dist', 'build', 'out', '.venv', 'venv', '__pycache__',
+  '.vscode', '.idea', '.reasonix', '.claude', 'POTCAR', 'site-packages', '.next', 'target',
+]);
+
+function workspaceRoot(): string | undefined {
+  return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+}
+
+function isStructureFile(file: string): boolean {
+  const base = path.basename(file).toUpperCase();
+  const ext = path.extname(file).toLowerCase();
+  return ext === '.cif'
+    || ext === '.vasp'
+    || ext === '.poscar'
+    || base === 'POSCAR'
+    || base.startsWith('POSCAR.')
+    || base.startsWith('POSCAR_')
+    || base === 'CONTCAR'
+    || base.startsWith('CONTCAR.')
+    || base.startsWith('CONTCAR_');
+}
+
+function getOpenStructures(): StructureTab[] {
+  const tabGroups = (vscode.window as any).tabGroups;
+  if (!tabGroups || !Array.isArray(tabGroups.all)) return [];
+  const root = workspaceRoot();
+  const seen = new Set<string>();
+  const result: StructureTab[] = [];
+  for (const group of tabGroups.all) {
+    for (const tab of group?.tabs ?? []) {
+      const uri = tab?.input?.uri;
+      if (!uri || uri.scheme !== 'file') continue;
+      const file = uri.fsPath as string;
+      if (!isStructureFile(file) || seen.has(file)) continue;
+      seen.add(file);
+      result.push({
+        path: file,
+        name: path.basename(file),
+        relative: root ? path.relative(root, file).replace(/\\/g, '/') : path.basename(file),
+        active: Boolean(tab.isActive),
+      });
+    }
+  }
+  result.sort((a, b) => Number(b.active) - Number(a.active) || a.relative.localeCompare(b.relative));
+  return result;
+}
+
+function structureState() {
+  return { open: getOpenStructures(), root: workspaceRoot() ?? '' };
+}
+
+
 class BackendService implements vscode.Disposable {
   readonly events = new vscode.EventEmitter<any>();
   readonly output: vscode.OutputChannel;
@@ -490,19 +550,27 @@ class VaspPanel implements vscode.Disposable {
     } catch (error) {
       check = { ok: false, error: errorMessage(error) };
     }
+    const structures = structureState();
     this.post({
       type: 'init',
       check,
       settings: this.backend.effectiveSettings(),
+      structures,
     });
     this.ready = true;
     const settings = this.backend.effectiveSettings();
+    const active = structures.open.find((item) => item.active)?.path ?? structures.open[0]?.path;
     const target = this.pendingPath
+      || active
       || (settings.autoLoadLastStructure ? settings.lastStructure : undefined);
     this.pendingPath = undefined;
     if (check.ok && target) {
       this.post({ type: 'openPath', path: target });
     }
+  }
+
+  updateStructureTabs(open: StructureTab[]) {
+    this.post({ type: 'structureTabs', open, root: workspaceRoot() ?? '' });
   }
 
   private async onMessage(message: any) {
@@ -544,6 +612,44 @@ class VaspPanel implements vscode.Disposable {
       switch (message.action) {
         case 'pickStructure': {
           reply(await pickStructureFile() ?? null);
+          break;
+        }
+        case 'getOpenStructures': {
+          reply(structureState());
+          break;
+        }
+        case 'listDirectory': {
+          const root = workspaceRoot();
+          if (!root) throw new Error('没有打开的项目文件夹');
+          const rootAbs = path.resolve(root);
+          const requested = message.path ? path.resolve(String(message.path)) : rootAbs;
+          const rel = path.relative(rootAbs, requested);
+          if (rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel)) {
+            throw new Error('目录不在当前项目内');
+          }
+          const entries = fs.readdirSync(requested, { withFileTypes: true });
+          const dirs: any[] = [];
+          const files: any[] = [];
+          for (const entry of entries) {
+            const full = path.join(requested, entry.name);
+            const relative = path.relative(rootAbs, full).replace(/\\/g, '/');
+            if (entry.isDirectory()) {
+              if (IGNORED_DIRS.has(entry.name)) continue;
+              dirs.push({ name: entry.name, path: full, relative });
+            } else if (entry.isFile() && isStructureFile(entry.name)) {
+              files.push({ name: entry.name, path: full, relative });
+            }
+          }
+          dirs.sort((a, b) => a.name.localeCompare(b.name));
+          files.sort((a, b) => a.name.localeCompare(b.name));
+          reply({
+            root: rootAbs,
+            path: requested,
+            relative: path.relative(rootAbs, requested).replace(/\\/g, '/'),
+            dirs: dirs.slice(0, 300),
+            files: files.slice(0, 300),
+            truncated: dirs.length > 300 || files.length > 300,
+          });
           break;
         }
         case 'pickPotcarDir': {
@@ -817,6 +923,13 @@ export function activate(context: vscode.ExtensionContext) {
       panel.reveal(file);
     }
   };
+
+  const tabGroups = (vscode.window as any).tabGroups;
+  if (tabGroups && typeof tabGroups.onDidChangeTabs === 'function') {
+    context.subscriptions.push(tabGroups.onDidChangeTabs(() => {
+      panel?.updateStructureTabs(getOpenStructures());
+    }));
+  }
 
   context.subscriptions.push(
     vscode.commands.registerCommand('generateVasp.open', (arg?: any) => {
