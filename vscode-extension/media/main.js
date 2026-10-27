@@ -262,6 +262,7 @@ async function onInit(message) {
   try {
     await refreshState();
   } catch (error) {
+    reportWebviewError('refreshState', error);
     showToast(error.message, true);
   }
   S.initializing = false;

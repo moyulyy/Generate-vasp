@@ -1,7 +1,8 @@
 /* 本地 3Dmol 视图；固定状态由 Python 后端维护，这里只负责显示和把点选/框选回传。
- * 与桌面版相比，只把 QWebChannel 换成 iframe 的 postMessage 桥。
+ * 直接嵌入主页面，因此用 IIFE 隔离作用域，避免与 main.js 的 applyState 等同名函数冲突。
  * 原子实例 kind: atom 胞内原子 / image 晶胞边界上的等价原子 / ghost 跨边界成键的胞外原子。
  * 所有实例的 src 指向胞内原子编号，固定操作一律作用到 src。 */
+(function () {
 'use strict';
 let viewer, model, structure = null, generation = 0, mode = 'rotate', masks = [];
 const layer = document.getElementById('layer');
@@ -244,3 +245,5 @@ try {
     viewer.setProjection('orthographic');
     bridge.ready();
 } catch (e) { report(e.message); }
+
+})();
