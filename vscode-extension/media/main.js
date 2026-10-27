@@ -119,6 +119,17 @@ function showToast(message, error = false) {
   }, error ? 6000 : 4000);
 }
 
+function reportWebviewError(where, error) {
+  const detail = error && (error.stack || error.message) ? (error.stack || error.message) : String(error);
+  const message = `${where}: ${detail}`;
+  console.error(message);
+  try {
+    post({ type: 'log', message });
+  } catch {
+    // ignore
+  }
+}
+
 function withKnown(params = {}) {
   return Object.assign({}, params, { knownStructureRevision: S.structureRevision });
 }
@@ -405,7 +416,6 @@ function applyState(state) {
 function renderAll(state) {
   updateEnvBadge();
   renderSummary();
-  renderStructureSources();
   renderProjects();
   renderSettings();
   renderViewerOptions();
@@ -416,6 +426,11 @@ function renderAll(state) {
   renderHints();
   renderLLM();
   renderFix();
+  try {
+    renderStructureSources();
+  } catch (error) {
+    reportWebviewError('结构文件来源 UI', error);
+  }
 }
 
 /* ------------------------------------------------------------------ 顶部 / 状态 */
@@ -517,6 +532,7 @@ function renderStructureSources() {
   const box = $('openStructureBox');
   const select = $('openStructureSelect');
   const hint = $('openStructureHint');
+  if (!box || !select || !hint) return;
   box.classList.toggle('hidden', !open.length);
   if (open.length) {
     const current = S.lastSource || '';
@@ -559,6 +575,7 @@ function renderStructureSources() {
   const tree = $('tree');
   const treeHint = $('treeHint');
   const toggle = $('toggleTree');
+  if (!treeBox || !tree || !treeHint || !toggle) return;
   treeBox.classList.remove('hidden');
   if (!root) {
     tree.classList.add('hidden');
@@ -584,6 +601,8 @@ function renderStructureSources() {
 
 function renderTree() {
   const tree = $('tree');
+  const hint = $('treeHint');
+  if (!tree || !hint) return;
   const root = S.tree.root;
   if (!root) {
     tree.replaceChildren();
@@ -610,7 +629,6 @@ function renderTree() {
   tree.append(row);
   if (expanded) renderTreeDir(root, 0, tree);
   const node = S.tree.nodes.get(root);
-  const hint = $('treeHint');
   if (S.tree.loading.has(root)) hint.textContent = '正在读取项目目录…';
   else if (node && node.error) hint.textContent = node.error;
   else if (node && !node.dirs.length && !node.files.length) hint.textContent = '根目录没有直接找到结构文件，展开子目录继续查找。';
@@ -2117,12 +2135,12 @@ function bindEvents() {
   $('openSettings').addEventListener('click', () => {
     void host('openSettings').catch((error) => showToast(error.message, true));
   });
-  $('pickFile').addEventListener('click', () => { void pickStructure(); });
-  $('refreshTabs').addEventListener('click', () => { void refreshOpenStructures(); });
-  $('toggleTree').addEventListener('click', toggleTreeVisible);
-  $('openStructureSelect').addEventListener('change', () => {
-    const value = $('openStructureSelect').value;
-    if (value) void loadStructure(value);
+  $('pickFile')?.addEventListener('click', () => { void pickStructure(); });
+  $('refreshTabs')?.addEventListener('click', () => { void refreshOpenStructures(); });
+  $('toggleTree')?.addEventListener('click', toggleTreeVisible);
+  const openSelect = $('openStructureSelect');
+  openSelect?.addEventListener('change', () => {
+    if (openSelect.value) void loadStructure(openSelect.value);
   });
   $('changeFile').addEventListener('click', () => { void pickStructure(); });
   $('removeFile').addEventListener('click', () => { void clearStructure(); });
@@ -2417,13 +2435,13 @@ function bindEvents() {
   ['dragenter', 'dragover'].forEach((name) => {
     document.body.addEventListener(name, (event) => {
       event.preventDefault();
-      $('sourcePanel').classList.add('drag');
+      $('sourcePanel')?.classList.add('drag');
     });
   });
   ['dragleave', 'drop'].forEach((name) => {
     document.body.addEventListener(name, (event) => {
       event.preventDefault();
-      $('sourcePanel').classList.remove('drag');
+      $('sourcePanel')?.classList.remove('drag');
     });
   });
   document.body.addEventListener('drop', (event) => {
@@ -2457,5 +2475,17 @@ function pathFromDrop(event) {
 }
 
 /* ------------------------------------------------------------------ 启动 */
+window.addEventListener('error', (event) => {
+  const target = event.target;
+  if (target && (target.src || target.href)) {
+    reportWebviewError('资源加载失败', target.src || target.href);
+  } else {
+    reportWebviewError('webview error', event.error || event.message || 'unknown');
+  }
+});
+window.addEventListener('unhandledrejection', (event) => {
+  reportWebviewError('webview unhandledrejection', event.reason);
+});
+
 bindEvents();
 post({ type: 'ready' });

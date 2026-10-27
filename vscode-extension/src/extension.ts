@@ -510,7 +510,9 @@ class VaspPanel implements vscode.Disposable {
     } catch (error) {
       return `<!doctype html><html><body><h2>缺少 media/index.html</h2><pre>${escapeHtml(errorMessage(error))}</pre></body></html>`;
     }
-    const uri = (name: string) => webview.asWebviewUri(vscode.Uri.joinPath(this.mediaDir, name)).toString();
+    const uri = (name: string) => webview.asWebviewUri(
+      vscode.Uri.joinPath(this.mediaDir, name).with({ query: `v=${Date.now().toString(36)}` }),
+    ).toString();
     return template
       .replace(/\{\{cspSource\}\}/g, webview.cspSource)
       .replace(/\{\{styleUri\}\}/g, uri('style.css'))
