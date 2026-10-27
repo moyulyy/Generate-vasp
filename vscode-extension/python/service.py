@@ -16,6 +16,19 @@ import threading
 import traceback
 from pathlib import Path
 
+# 扩展宿主通过管道读取 stdout/stderr。Windows 的默认代码页可能是 GBK/cp1252，
+# add-spin 的 LLM 进度会向 stderr 写中文和 Å/μB 等字符，未改编码会直接抛
+# UnicodeEncodeError，表现为 UI 上只看到“ordinal not in range(256)”。
+for _stream, _line_buffering in ((sys.stdout, True), (sys.stderr, False)):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace", line_buffering=_line_buffering)
+    except Exception:
+        pass
+try:
+    sys.stdin.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 HERE = Path(__file__).resolve().parent
 
 

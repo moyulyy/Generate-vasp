@@ -418,6 +418,17 @@ function applyState(state) {
     S.activeTab = 'structure';
   }
   renderAll(state);
+  syncActiveEditor();
+}
+
+function syncActiveEditor() {
+  if (S.activeTab === 'structure') return;
+  const name = S.activeTab;
+  if (S.dirtyFile === name) return;
+  const file = S.files[name];
+  if (!file) return;
+  const server = S.serverText[name] ?? file.text ?? '';
+  if (editor.value !== server) setEditorValue(server, { reset: false });
 }
 
 function renderAll(state) {

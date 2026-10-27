@@ -124,6 +124,10 @@ npm run compile      # tsc 严格模式编译
 
 环境变量 `LLM_API_KEY`（或 `OPENAI_API_KEY` / `DEEPSEEK_API_KEY`）、`LLM_BASE_URL`、`LLM_MODEL` 优先。LLM 只是初猜，仍需比较不同磁序的总能。
 
+> 如果提示“API Key 含非 ASCII 字符”或“ordinal not in range(256)”，说明 `llm_config.json` 里的 `api_key` 仍是中文占位符/说明文字。请替换为 DeepSeek 控制台里的真实 Key；Key 只放在配置文件，界面不显示。
+>
+> POSCAR 原文件若带 `Cartesian` 速度块，显示行数会多于原子数；编辑器与生成文件都会保留完整内容，向下滚动即可看到全部原子坐标。
+
 ## 目录结构
 
 ```

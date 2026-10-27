@@ -1055,7 +1055,10 @@ class Controller:
         elif f == "POTCAR" and self.potcar_full:
             info = "仅显示组成，不显示赝势全文"
         elif f == "POSCAR" and text:
-            info = "Selective dynamics：T 弛豫 / F 固定"
+            info = (f"Selective dynamics：T 弛豫 / F 固定 · {len(self.atoms)} 个原子"
+                    f" · {len(text.splitlines())} 行")
+            if "Cartesian" in text:
+                info += " · 保留原文件速度块"
         elif f in EXTRA and text:
             info = self.notes[f]
         return {

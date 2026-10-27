@@ -2724,7 +2724,12 @@ class LLMClient:
         temperature: float = LLM_TEMPERATURE,
         max_retries: int = LLM_MAX_RETRIES,
     ):
-        self.api_key = api_key
+        self.api_key = str(api_key or "").strip()
+        if not self.api_key.isascii():
+            raise RuntimeError(
+                "API Key 含非 ASCII 字符（可能是中文占位符或说明文字）。"
+                "请打开 llm_config.json，把 api_key 替换为 DeepSeek 控制台里的真实 Key。"
+            )
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = timeout
@@ -2869,6 +2874,12 @@ def build_client_from_args(args) -> LLMClient:
         raise RuntimeError(
             "未找到 API Key。请设置 LLM_API_KEY / OPENAI_API_KEY / DEEPSEEK_API_KEY，"
             "或用 --api-key 指定；也可以用 --no-llm 走内置启发式。"
+        )
+    api_key = str(api_key).strip()
+    if not api_key.isascii():
+        raise RuntimeError(
+            "API Key 含非 ASCII 字符（可能是中文占位符或说明文字）。"
+            "请打开 llm_config.json，把 api_key 替换为 DeepSeek 控制台里的真实 Key。"
         )
     return LLMClient(api_key, base_url=base_url, model=model,
                      temperature=args.temperature, timeout=args.timeout,
