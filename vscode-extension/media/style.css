@@ -362,9 +362,13 @@ input:disabled, select:disabled { opacity: .55; }
   border-radius: 12px; overflow: hidden;
 }
 .highlight {
-  position: absolute; inset: 0; margin: 0; padding: 10px 12px;
+  /* 高亮层必须按内容高度铺开，由 .editor-wrap 负责裁剪；
+     若这里写 inset:0 + overflow:hidden，后面的行会被高亮层自身裁掉，
+     滚动时只移动第一屏，表现为所有文件都“显示不全”。 */
+  position: absolute; top: 0; left: 0; right: 0; min-height: 100%;
+  margin: 0; padding: 10px 12px;
   font-family: var(--mono); font-size: 12.5px; line-height: 20px;
-  color: #E5E5EA; white-space: pre; overflow: hidden; pointer-events: none;
+  color: #E5E5EA; white-space: pre; overflow: visible; pointer-events: none;
   tab-size: 4; will-change: transform;
 }
 .editor {
